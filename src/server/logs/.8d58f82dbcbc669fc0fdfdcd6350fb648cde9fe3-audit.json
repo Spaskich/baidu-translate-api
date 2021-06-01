@@ -1,0 +1,24 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 7
+    },
+    "auditLog": "logs\\.8d58f82dbcbc669fc0fdfdcd6350fb648cde9fe3-audit.json",
+    "files": [
+        {
+            "date": 1622188236643,
+            "name": "logs\\baidu-translate-2021-05-28-10.log",
+            "hash": "0adddbb37bf24198eb0f2b13a768a883"
+        },
+        {
+            "date": 1622537312382,
+            "name": "logs\\baidu-translate-2021-06-01-11.log",
+            "hash": "1eb6165b1f1dc3444aa0f0beae482fe5"
+        },
+        {
+            "date": 1622540026539,
+            "name": "logs\\baidu-translate-2021-06-01-12.log",
+            "hash": "9c3394f582eee9f255f2dfbb1639199e"
+        }
+    ]
+}

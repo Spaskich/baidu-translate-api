@@ -12,6 +12,8 @@ var window = {
 };
 var i = null;
 
+var tokenExpirationDate = null;
+
 function a(r) {
     if (Array.isArray(r)) {
         for (var o = 0, t = Array(r.length); o < r.length; o++)
@@ -96,7 +98,7 @@ function update(requestOpts) {
             store.setParams({
                 gtk: window.gtk,
                 token,
-                expires: getTomorrowZero()
+                expires: getTokenExpirationDate()
             });
 
             resolve(token);
@@ -104,32 +106,41 @@ function update(requestOpts) {
     });
 }
 
-function getTomorrowZero() {
-    const now = new Date();
+function getTokenExpirationDate() {
+    if (tokenExpirationDate == null) {
+        tokenExpirationDate = setNewTokenExpirationDate();
+    }
 
-    now.setHours(24);
-    now.setMinutes(0);
-
-    return now.setSeconds(0);
+    return tokenExpirationDate;
 }
 
-module.exports.get = (text, requestOpts) => {
+function setNewTokenExpirationDate() {
+    const now = new Date();
+    return now.addHours(2);
+}
+
+Date.prototype.addHours = function(h) {
+    this.setTime(this.getTime() + (h*60*60*1000));
+    return this;
+}
+
+module.exports.get = (text, requestOpts, shouldUpdate) => {
     return new Promise((resolve, reject) => {
         let params = store.getParams();
 
-        if (params && params.expires > new Date()) {
+        if (params && params.expires > new Date() && !shouldUpdate) {
             window.gtk = params.gtk;
 
             return resolve({
                 sign: e(text),
                 token: params.token
             });
+        } else {
+            update(requestOpts).then(token => {
+                let sign = e(text);
+
+                resolve({ sign, token });
+            });
         }
-
-        update(requestOpts).then(token => {
-            let sign = e(text);
-
-            resolve({ sign, token });
-        });
     });
 };
