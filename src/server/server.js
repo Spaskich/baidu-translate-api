@@ -25,6 +25,12 @@ app.listen(PORT, HOST, () => {
 app.post("/", async(req, res, next) => {
     let from = languageMapper.mapLanguages(req.body.from);
     let to = languageMapper.mapLanguages(req.body.to);
+    let proxy;
+    if (req.body.proxy !== undefined) {
+        proxy = (req.body.proxy);
+    } else {
+
+    }
     let sentences = req.body.sentences;
 
     // logger.info(`${new Date()}: Received translation request from ${from} to ${to}: [${sentences}].`);
@@ -36,7 +42,7 @@ app.post("/", async(req, res, next) => {
 
     if (timeElapsed > UNAUTHORIZED_TIME) {
         for (let sentence of sentences) {
-            resultMap.push(await retryTranslate(from, to, sentence));
+            resultMap.push(await retryTranslate(from, to, proxy, sentence));
         }
     } else {
         logger.info("Not enough time has passed since last 'Unauthorized' exception.");
@@ -53,8 +59,8 @@ app.post("/", async(req, res, next) => {
     res.json(resultMap);
 });
 
-async function retryTranslate(from, to, sentence, retries = 2) {
-    let result = await translator.translateSentence(from, to, sentence);
+async function retryTranslate(from, to, proxy, sentence, retries = 2) {
+    let result = await translator.translateSentence(from, to, proxy, sentence);
 
     if ("exception" in result) {
         switch (result.exception.statusCode) {

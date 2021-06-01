@@ -4,10 +4,10 @@ const logger = require("./logger-service").logger;
 
 translate.setGlobalConfig({ useLocalStore: true });
 
-async function translateSentence(from, to, sentence, retries = 1) {
+async function translateSentence(from, to, proxy, sentence, retries = 1 ) {
 
     try {
-        return await translate(sentence, {from: from, to: to}).then(result => {
+        return await translate(sentence, {from: from, to: to, proxy: proxy}).then(result => {
 
             return  {
                 from: from,
@@ -19,7 +19,7 @@ async function translateSentence(from, to, sentence, retries = 1) {
     } catch (e) {
         let exception =  constructException(e);
         if (exception.statusCode === 401 && retries > 0) {
-            return await translateSentence(from, to, sentence, --retries);
+            return await translateSentence(from, to, proxy, sentence, --retries);
         }
 
         logger.error(`${new Date}: Error while translating: [${sentence}]:` )

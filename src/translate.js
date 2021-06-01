@@ -1,6 +1,6 @@
 const querystring = require("querystring");
 
-const request = require("request");
+const request = require('request');
 const apiToken = require("./token");
 const cookie = require("./cookie");
 const store = require("./store");
@@ -55,6 +55,8 @@ class Translate {
 
         return new Promise((resolve, reject) => {
             apiToken.get(query, requestOpts, false).then(({ sign, token }) => {
+
+
                 var data = {
                     query, sign, token,
                     from: opts.from,
