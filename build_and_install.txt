@@ -1,0 +1,2 @@
+docker build -t hub.tetracom.com/baidu-translate-1 .
+docker push hub.tetracom.com/baidu-translate-1

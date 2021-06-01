@@ -1,7 +1,7 @@
 const querystring = require("querystring");
 
 const request = require("request");
-const token = require("./token");
+const apiToken = require("./token");
 const cookie = require("./cookie");
 const store = require("./store");
 const globalConfig = require('./globalConfig');
@@ -35,6 +35,16 @@ class Translate {
                 });
             }
         }).then(() => {
+            // let retries = 1;
+            // console.log("res: " + res[0].exception.statusCode)
+
+            // while (res[0].exception.statusCode === 401 && retries > 0) {
+            //     console.log("retries: " + retries);
+            //     retries--;
+            //
+            //     res = cookie.get(requestOpts).then(() => this.trans()).catch(e => console.log(e));
+            // }
+
             return cookie.get(requestOpts).then(() => this.trans());
         }); 
     }
@@ -44,11 +54,11 @@ class Translate {
         const { requestOpts } = opts;
 
         return new Promise((resolve, reject) => {
-            token.get(query, requestOpts).then(({ sign, token }) => {
-                const data = {
+            apiToken.get(query, requestOpts, false).then(({ sign, token }) => {
+                var data = {
                     query, sign, token,
-                    from: opts.from, 
-                    to: opts.to, 
+                    from: opts.from,
+                    to: opts.to,
                     transtype: "realtime",
                     simple_means_flag: 3,
                 };
@@ -59,38 +69,48 @@ class Translate {
                 jar.setCookie(cookies.value, url);
 
                 request(url, { jar, ...requestOpts }, (err, res, body) => {
+
                     if (err) return reject(err);
 
-                    if (res.statusCode != 200) {
-                        return reject({ 
-                            statusCode: res.statusCode, 
-                            statusMessage: res.statusMessage 
+                    if (res.statusCode !== 200) {
+                        if (res.statusCode === 401) {
+                            apiToken.get(query, requestOpts, true).then(r => sign, token);
+                        }
+
+                        return reject({
+                            statusCode: res.statusCode,
+                            statusMessage: res.statusMessage
                         });
                     }
 
                     try {
                         const result = JSON.parse(body);
 
-                        if (result.error) return reject(result);
+                        try {
+                            if (result.error || result.errno) return reject(result);
 
-                        const { trans_result } = result;
-                        const { from, to } = trans_result;
-                        const { dst, src } = trans_result.data[0];
+                            const { trans_result } = result;
+                            const { from, to } = trans_result;
+                            const { dst, src } = trans_result.data[0];
 
-                        resolve({
-                            from,
-                            to,
-                            trans_result: {
-                                dst,
-                                src
-                            }
-                        });
+                            resolve({
+                                from,
+                                to,
+                                trans_result: {
+                                    dst,
+                                    src
+                                }
+                            });
+                        } catch (err) {
+                            console.log("translate.js:101 - result: [" + JSON.stringify(result) + "]");
+                            reject(err);
+                        }
                     } catch (err) {
                         reject(err);
                     }
                 });
             });
-        });  
+        });
     }
 
     langdetect() {
@@ -113,6 +133,8 @@ class Translate {
         });
     }
 }
+
+
 
 module.exports = function translate(query, opts = {}) {
     return new Translate(query, opts).request();
